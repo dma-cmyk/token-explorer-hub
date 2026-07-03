@@ -49,7 +49,7 @@ token-explorer-hub/
 ### GitHub Pages での公開
 本リポジトリは GitHub Actions を用いた GitHub Pages の自動デプロイに対応しています。
 `main` ブランチにプッシュするだけで、以下のURLにて一般公開されます：
-`https://<your-username>.github.io/token-explorer-hub/`
+https://dma-cmyk.github.io/token-explorer-hub/
 
 ---
 
