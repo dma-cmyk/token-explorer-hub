@@ -56,3 +56,4 @@ https://dma-cmyk.github.io/token-explorer-hub/
 ## 🛡️ ライセンス
 
 This project is open-sourced under the MIT License.
+
