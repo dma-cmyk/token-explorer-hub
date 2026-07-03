@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Explorer Hub - トークン解析リンク生成ツール</title>
+    <title>Token Explorer Hub - トークン解析・セキュリティ診断ツール</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts (Noto Sans JP) -->
@@ -31,7 +31,7 @@
         }
     </style>
 </head>
-<body class="text-gray-100 min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+<body class="text-gray-100 min-h-screen flex flex-col selection:bg-blue-600 selection:text-white relative">
 
     <!-- バックグラウンド装飾グラデーション -->
     <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
@@ -42,17 +42,17 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="p-2 bg-blue-600/20 text-blue-500 rounded-lg border border-blue-500/30">
-                    <i data-lucide="link-2" class="w-6 h-6"></i>
+                    <i data-lucide="shield-alert" class="w-6 h-6"></i>
                 </div>
                 <div>
                     <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                        Token Explorer Hub
+                        Token Explorer Hub & Shield
                     </h1>
-                    <p class="text-[10px] text-gray-400 hidden sm:block">コントラクトアドレスからワンクリックで各種解析ページへ</p>
+                    <p class="text-[10px] text-gray-400 hidden sm:block">コントラクトアドレスからワンクリックで各種解析 ＆ リアルタイムセキュリティ自動診断</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3 text-xs text-gray-400">
-                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>Base Mainnet Online</span>
+                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>Security API Connected</span>
             </div>
         </div>
     </header>
@@ -116,6 +116,88 @@
                     </div>
                 </div>
 
+                <!-- リアルタイムセキュリティ診断結果 (追加セクション) -->
+                <div id="security-report-card" class="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 shadow-xl backdrop-blur-sm hidden">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-800">
+                        <h2 class="text-md font-semibold text-gray-200 flex items-center gap-2">
+                            <i data-lucide="shield" class="w-5 h-5 text-emerald-400"></i>
+                            🛡️ リアルタイム危険度分析
+                        </h2>
+                        <span id="security-status-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                            スキャン中...
+                        </span>
+                    </div>
+
+                    <!-- ローディング表示 -->
+                    <div id="security-loading" class="py-8 flex flex-col items-center justify-center text-center">
+                        <div class="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-3"></div>
+                        <p class="text-xs text-gray-400">GoPlus Security 監査データベースに接続中...</p>
+                    </div>
+
+                    <!-- エラー表示 -->
+                    <div id="security-error" class="py-6 text-center text-xs text-gray-500 hidden">
+                        <i data-lucide="alert-triangle" class="w-8 h-8 text-yellow-500 mx-auto mb-2"></i>
+                        <p>このチェーンの自動診断結果を取得できませんでした。<br>右側の外部診断リンクをご利用ください。</p>
+                    </div>
+
+                    <!-- 診断データ表示エリア -->
+                    <div id="security-results" class="space-y-4 hidden">
+                        
+                        <!-- 危険度レーティング -->
+                        <div class="bg-gray-950/50 p-4 rounded-xl border border-gray-800/80">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-gray-400">ハニーポット（売却不可詐欺）判定</span>
+                                <span id="honeypot-result" class="text-sm font-bold">-</span>
+                            </div>
+                            <div class="w-full bg-gray-850 rounded-full h-1.5 overflow-hidden">
+                                <div id="honeypot-bar" class="bg-gray-700 h-1.5 transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- 主要項目チェックリスト -->
+                        <div class="space-y-2">
+                            <!-- ミント機能 -->
+                            <div class="flex items-center justify-between p-2.5 bg-gray-950/20 rounded-lg text-xs">
+                                <span class="text-gray-400 flex items-center gap-1.5">
+                                    <i data-lucide="printer" class="w-4 h-4 text-gray-500"></i>
+                                    無限発行機能 (Mint)
+                                </span>
+                                <span id="mint-badge" class="font-semibold">-</span>
+                            </div>
+
+                            <!-- 所有権放棄 -->
+                            <div class="flex items-center justify-between p-2.5 bg-gray-950/20 rounded-lg text-xs">
+                                <span class="text-gray-400 flex items-center gap-1.5">
+                                    <i data-lucide="user-minus" class="w-4 h-4 text-gray-500"></i>
+                                    コントラクト所有者の有無
+                                </span>
+                                <span id="owner-badge" class="font-semibold">-</span>
+                            </div>
+
+                            <!-- ブラックリスト登録能力 -->
+                            <div class="flex items-center justify-between p-2.5 bg-gray-950/20 rounded-lg text-xs">
+                                <span class="text-gray-400 flex items-center gap-1.5">
+                                    <i data-lucide="user-x" class="w-4 h-4 text-gray-500"></i>
+                                    ユーザー凍結能力 (Blacklist)
+                                </span>
+                                <span id="blacklist-badge" class="font-semibold">-</span>
+                            </div>
+
+                            <!-- 取引手数料（Tax） -->
+                            <div class="flex items-center justify-between p-2.5 bg-gray-950/20 rounded-lg text-xs">
+                                <span class="text-gray-400 flex items-center gap-1.5">
+                                    <i data-lucide="percent" class="w-4 h-4 text-gray-500"></i>
+                                    売買手数料（Tax）
+                                </span>
+                                <span id="tax-badge" class="font-semibold text-gray-300">-</span>
+                            </div>
+                        </div>
+
+                        <!-- 判定テキスト -->
+                        <p id="safety-advice" class="text-xs p-3 rounded-lg leading-relaxed"></p>
+                    </div>
+                </div>
+
                 <!-- 履歴カード -->
                 <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
                     <div class="flex items-center justify-between mb-4">
@@ -154,7 +236,7 @@
                         </div>
                         <h3 class="text-lg font-bold text-gray-200">コントラクトアドレスを入力してください</h3>
                         <p class="text-xs text-gray-400 max-w-sm mt-2">
-                            BaseやEthereumなどのトークンアドレスを入力すると、BasescanのHoldersページやチャートサイトへの直接リンクが即座に生成されます。
+                            BaseやEthereumなどのトークンアドレスを入力すると、BasescanのHoldersページやチャートサイトへの直接リンクが即座に生成され、自動的に危険度スキャンが走ります。
                         </p>
                     </div>
 
@@ -263,7 +345,7 @@
                                             </div>
                                             <div>
                                                 <h4 class="text-sm font-bold text-gray-200 group-hover:text-yellow-300 transition-colors">GeckoTerminal</h4>
-                                                <p class="text-[11px] text-gray-500">CoinGecko提供のDEX市場追跡</p>
+                                                <p class="text-[11px] text-gray-500">CoinGecko提供 of DEX市場追跡</p>
                                             </div>
                                         </div>
                                         <i data-lucide="chevron-right" class="w-4 h-4 text-gray-600 group-hover:text-yellow-400 transition-transform group-hover:translate-x-0.5"></i>
@@ -320,7 +402,7 @@
                         <div>
                             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                                 <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                                トークン安全性診断 (ハニーポット/ハック調査)
+                                外部安全性診断リンク
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 
@@ -332,8 +414,8 @@
                                                 <i data-lucide="shield-check" class="w-5 h-5"></i>
                                             </div>
                                             <div>
-                                                <h4 class="text-sm font-bold text-gray-200 group-hover:text-red-300 transition-colors">GoPlus Security</h4>
-                                                <p class="text-[11px] text-gray-500">EVMの契約安全性・ハニーポット検出</p>
+                                                <h4 class="text-sm font-bold text-gray-200 group-hover:text-red-300 transition-colors">GoPlus Security Web</h4>
+                                                <p class="text-[11px] text-gray-500">契約安全性の外部フルレポート</p>
                                             </div>
                                         </div>
                                         <i data-lucide="chevron-right" class="w-4 h-4 text-gray-600 group-hover:text-red-400 transition-transform group-hover:translate-x-0.5"></i>
@@ -349,7 +431,7 @@
                                             </div>
                                             <div>
                                                 <h4 id="secondary-sec-title" class="text-sm font-bold text-gray-200 group-hover:text-orange-300 transition-colors">Honeypot.is</h4>
-                                                <p id="secondary-sec-desc" class="text-[11px] text-gray-500">手数料調査・ハニーポット判定</p>
+                                                <p id="secondary-sec-desc" class="text-[11px] text-gray-500">外部ハニーポットシミュレーター</p>
                                             </div>
                                         </div>
                                         <i data-lucide="chevron-right" class="w-4 h-4 text-gray-600 group-hover:text-orange-400 transition-transform group-hover:translate-x-0.5"></i>
@@ -377,7 +459,7 @@
     <!-- フッター -->
     <footer class="border-t border-gray-800 bg-gray-950 py-6 mt-12 text-center text-xs text-gray-500">
         <div class="max-w-7xl mx-auto px-4">
-            <p>© 2026 Token Explorer Hub. For educational purposes and blockchain analysis.</p>
+            <p>© 2026 Token Explorer Hub & Shield. For educational purposes and blockchain analysis.</p>
             <p class="mt-1">常に公式コントラクトであることをソース元で確認の上、取引をしてください。</p>
         </div>
     </footer>
@@ -481,6 +563,20 @@
         const historyList = document.getElementById('history-list');
         const clearHistoryBtn = document.getElementById('clear-history-btn');
 
+        // セキュリティ診断DOM
+        const securityReportCard = document.getElementById('security-report-card');
+        const securityLoading = document.getElementById('security-loading');
+        const securityError = document.getElementById('security-error');
+        const securityResults = document.getElementById('security-results');
+        const securityStatusBadge = document.getElementById('security-status-badge');
+        const honeypotResult = document.getElementById('honeypot-result');
+        const honeypotBar = document.getElementById('honeypot-bar');
+        const mintBadge = document.getElementById('mint-badge');
+        const ownerBadge = document.getElementById('owner-badge');
+        const blacklistBadge = document.getElementById('blacklist-badge');
+        const taxBadge = document.getElementById('tax-badge');
+        const safetyAdvice = document.getElementById('safety-advice');
+
         // 結果エリアのDOM
         const resultChainBadge = document.getElementById('result-chain-badge');
         const resultAddressShort = document.getElementById('result-address-short');
@@ -523,7 +619,6 @@
         // チェーン変更
         function selectChain(chainId) {
             selectedChainId = chainId;
-            // ボタンクラスをリセット & 更新
             Object.keys(chains).forEach(id => {
                 const btn = document.getElementById(`btn-chain-${id}`);
                 if (btn) {
@@ -535,9 +630,9 @@
                 }
             });
 
-            // バリデーション実行
             validateAddress(addressInput.value);
             updateLinks();
+            fetchSecurityData();
         }
 
         // 住所バリデーション
@@ -548,6 +643,7 @@
                 validationBadge.className = "text-[10px] font-semibold text-gray-500";
                 errorMsg.classList.add('hidden');
                 emptyState.classList.remove('opacity-0', 'pointer-events-none');
+                securityReportCard.classList.add('hidden');
                 return false;
             }
 
@@ -555,10 +651,8 @@
             let isValid = false;
 
             if (currentChain.type === 'evm') {
-                // EVM: 0xから始まる40桁の16進数
                 isValid = /^0x[a-fA-F0-9]{40}$/.test(cleanAddress);
             } else if (currentChain.type === 'solana') {
-                // Solana: Base58フォーマット。文字数32〜44文字
                 isValid = /^[1-9A-HJ-NP-Za-km-u]{32,44}$/.test(cleanAddress);
             }
 
@@ -568,8 +662,8 @@
                 validationBadge.innerHTML = `<i data-lucide="check" class="w-3 h-3"></i> Valid`;
                 errorMsg.classList.add('hidden');
                 emptyState.classList.add('opacity-0', 'pointer-events-none');
+                securityReportCard.classList.remove('hidden');
                 
-                // 成功したら履歴に追加
                 addToHistory(cleanAddress, selectedChainId);
             } else {
                 validationBadge.textContent = "不正形式";
@@ -577,10 +671,147 @@
                 validationBadge.innerHTML = `<i data-lucide="x" class="w-3 h-3"></i> Invalid`;
                 errorMsg.classList.remove('hidden');
                 emptyState.classList.remove('opacity-0', 'pointer-events-none');
+                securityReportCard.classList.add('hidden');
             }
             
             lucide.createIcons();
             return isValid;
+        }
+
+        // リアルタイムセキュリティ診断APIの呼び出し
+        async function fetchSecurityData() {
+            const address = addressInput.value.trim();
+            const chain = chains[selectedChainId];
+            
+            if (!address || !validateAddress(address)) {
+                return;
+            }
+
+            // 初期化
+            securityLoading.classList.remove('hidden');
+            securityError.classList.add('hidden');
+            securityResults.classList.add('hidden');
+            securityStatusBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-gray-800 text-gray-400";
+            securityStatusBadge.textContent = "スキャン中...";
+
+            // SolanaはGoPlus API非対応なため早期ハンドリング
+            if (chain.type === 'solana') {
+                securityLoading.classList.add('hidden');
+                securityError.classList.remove('hidden');
+                securityError.querySelector('p').innerHTML = "Solanaネットワークは外部サービスRugCheckでの個別確認を推奨します。<br>右側の「Rug Check」をご利用ください。";
+                return;
+            }
+
+            try {
+                // GoPlus Security パブリックAPIを叩く (無料・レートリミットあり)
+                const response = await fetch(`https://api.gopluslabs.io/api/v1/token_security/${chain.goPlusId}?contract_addresses=${address}`);
+                if (!response.ok) throw new Error('API通信エラー');
+                
+                const data = await response.json();
+                
+                if (data.code === 1 && data.result && data.result[address.toLowerCase()]) {
+                    const info = data.result[address.toLowerCase()];
+                    displaySecurityReport(info);
+                } else {
+                    throw new Error('判定データがありません');
+                }
+            } catch (err) {
+                console.error(err);
+                securityLoading.classList.add('hidden');
+                securityError.classList.remove('hidden');
+            }
+        }
+
+        // セキュリティ診断結果のレンダリング
+        function displaySecurityReport(info) {
+            securityLoading.classList.add('hidden');
+            securityResults.classList.remove('hidden');
+
+            let riskPoints = 0;
+            let warnings = 0;
+
+            // 1. ハニーポット（買えるけど売れない超危険詐欺）
+            const isHoneypot = info.is_honeypot === "1";
+            if (isHoneypot) {
+                honeypotResult.textContent = "ハニーポット (極めて危険)";
+                honeypotResult.className = "text-sm font-bold text-red-500 animate-pulse";
+                honeypotBar.className = "bg-red-500 h-1.5 rounded-full transition-all duration-500";
+                honeypotBar.style.width = "100%";
+                riskPoints += 5;
+            } else {
+                honeypotResult.textContent = "安全 (検証済)";
+                honeypotResult.className = "text-sm font-bold text-emerald-400";
+                honeypotBar.className = "bg-emerald-400 h-1.5 rounded-full transition-all duration-500";
+                honeypotBar.style.width = "10%";
+            }
+
+            // 2. Mint機能（管理者によるトークン無限発行）
+            const isMintable = info.is_mintable === "1";
+            if (isMintable) {
+                mintBadge.textContent = "可能（要注意）";
+                mintBadge.className = "font-bold text-yellow-500";
+                warnings++;
+            } else {
+                mintBadge.textContent = "不可（安全）";
+                mintBadge.className = "font-bold text-emerald-400";
+            }
+
+            // 3. 所有権の放棄（Ownerがまだ権限を持っているか）
+            // owner_address が '0x000...0000' であれば放棄されている（安全）
+            const hasOwner = info.owner_address && info.owner_address !== "0x0000000000000000000000000000000000000000" && info.owner_address !== "";
+            if (hasOwner) {
+                ownerBadge.textContent = "所有権あり（改変リスク）";
+                ownerBadge.className = "font-bold text-yellow-500";
+                warnings++;
+            } else {
+                ownerBadge.textContent = "放棄済み（安全）";
+                ownerBadge.className = "font-bold text-emerald-400";
+            }
+
+            // 4. ブラックリスト（任意のウォレットを凍結し、送金できなくするプログラム）
+            const hasBlacklist = info.is_blacklisted === "1";
+            if (hasBlacklist) {
+                blacklistBadge.textContent = "あり（極めて危険）";
+                blacklistBadge.className = "font-bold text-red-500";
+                riskPoints += 3;
+            } else {
+                blacklistBadge.textContent = "なし（安全）";
+                blacklistBadge.className = "font-bold text-emerald-400";
+            }
+
+            // 5. 手数料の表示 (買手数料 / 売手数料)
+            const buyTax = parseFloat(info.buy_tax || "0") * 100;
+            const sellTax = parseFloat(info.sell_tax || "0") * 100;
+            taxBadge.textContent = `買: ${buyTax.toFixed(1)}% / 売: ${sellTax.toFixed(1)}%`;
+            if (buyTax > 15 || sellTax > 15) {
+                taxBadge.className = "font-bold text-red-500";
+                riskPoints += 2;
+            } else if (buyTax > 5 || sellTax > 5) {
+                taxBadge.className = "font-bold text-yellow-500";
+                warnings++;
+            } else {
+                taxBadge.className = "font-bold text-emerald-400";
+            }
+
+            // 危険度ステータスバッジの決定
+            if (riskPoints >= 4) {
+                securityStatusBadge.textContent = "危険 (HIGH RISK)";
+                securityStatusBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-red-950 text-red-400 border border-red-800/50";
+                safetyAdvice.className = "text-xs p-3 rounded-lg leading-relaxed bg-red-950/30 text-red-400 border border-red-900/30";
+                safetyAdvice.innerHTML = `<span class="font-bold flex items-center gap-1"><i data-lucide="shield-alert" class="w-4 h-4"></i> 購入非推奨</span> このトークンには、売却を妨げるハニーポット、特定のウォレットをBANするブラックリスト、あるいは法外な手数料（Tax）がプログラムに含まれています。極めて危険です。`;
+            } else if (warnings > 0 || riskPoints > 0) {
+                securityStatusBadge.textContent = "注意 (WARNING)";
+                securityStatusBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-950 text-yellow-400 border border-yellow-800/50";
+                safetyAdvice.className = "text-xs p-3 rounded-lg leading-relaxed bg-yellow-950/30 text-yellow-400 border border-yellow-900/30";
+                safetyAdvice.innerHTML = `<span class="font-bold flex items-center gap-1"><i data-lucide="alert-triangle" class="w-4 h-4"></i> 注意事項あり</span> トークンの売却は可能ですが、所有者がコントラクトを改変できる権限を保有しているか、運営が新規発行できる状態（Mint）です。突発的なラグプル（資金持ち逃げ）に警戒してください。`;
+            } else {
+                securityStatusBadge.textContent = "安全 (PASSED)";
+                securityStatusBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800/50";
+                safetyAdvice.className = "text-xs p-3 rounded-lg leading-relaxed bg-emerald-950/30 text-emerald-400 border border-emerald-900/30";
+                safetyAdvice.innerHTML = `<span class="font-bold flex items-center gap-1"><i data-lucide="shield-check" class="w-4 h-4"></i> クリーンなプログラム</span> 所有権が放棄されている、もしくは悪意あるコード（凍結・ハニーポット）が検知されませんでした。取引リスクが比較的低いと考えられます。`;
+            }
+
+            lucide.createIcons();
         }
 
         // リンクURLの動的生成
@@ -627,7 +858,6 @@
                 linkDeBank.href = `https://debank.com/profile/${address}`;
                 linkDeBank.classList.remove('opacity-50', 'pointer-events-none');
             } else {
-                // SolanaにDeBankは非対応
                 linkDeBank.href = "#";
                 linkDeBank.classList.add('opacity-50', 'pointer-events-none');
             }
@@ -637,12 +867,10 @@
                 linkGoPlus.href = `https://gopluslabs.io/token-security/${chain.goPlusId}/${address}`;
                 linkGoPlus.classList.remove('opacity-50', 'pointer-events-none');
                 
-                // Honeypot.is のリンク
                 linkSecondarySec.href = `https://honeypot.is/?address=${address}`;
                 secondarySecTitle.textContent = "Honeypot.is";
-                secondarySecDesc.textContent = "買い売り手数料・ハニーポット判定";
+                secondarySecDesc.textContent = "外部ハニーポットシミュレーター";
             } else {
-                // Solanaの場合は GoPlus ではなく RugCheck を割り当てる
                 linkGoPlus.href = "#";
                 linkGoPlus.classList.add('opacity-50', 'pointer-events-none');
 
@@ -652,7 +880,7 @@
             }
         }
 
-        // クリップボードコピー処理 (安全なiFrame代替用)
+        // クリップボードコピー処理
         function copyText(text) {
             const tempInput = document.createElement('textarea');
             tempInput.value = text;
@@ -708,10 +936,8 @@
         }
 
         function addToHistory(address, chainId) {
-            // 重複チェック
             const exists = searchHistory.some(item => item.address.toLowerCase() === address.toLowerCase() && item.chainId === chainId);
             if (exists) {
-                // すでに存在する場合は最上位に持ってくる
                 searchHistory = searchHistory.filter(item => !(item.address.toLowerCase() === address.toLowerCase() && item.chainId === chainId));
             }
 
@@ -721,7 +947,6 @@
                 timestamp: Date.now()
             });
 
-            // 最大10件
             if (searchHistory.length > 10) {
                 searchHistory.pop();
             }
@@ -731,7 +956,7 @@
         }
 
         function removeFromHistory(index, event) {
-            event.stopPropagation(); // 親のクリックイベントを発火させない
+            event.stopPropagation();
             searchHistory.splice(index, 1);
             localStorage.setItem('token_explorer_history_v2', JSON.stringify(searchHistory));
             renderHistory();
@@ -778,7 +1003,6 @@
                     </div>
                 `;
 
-                // 削除ボタンへのイベント設定
                 div.querySelector('.delete-history-btn').onclick = (e) => removeFromHistory(index, e);
 
                 historyList.appendChild(div);
@@ -792,6 +1016,7 @@
             const val = e.target.value.trim();
             if (validateAddress(val)) {
                 updateLinks();
+                fetchSecurityData();
             }
         });
 
@@ -803,6 +1028,7 @@
                     addressInput.value = text.trim();
                     if (validateAddress(text.trim())) {
                         updateLinks();
+                        fetchSecurityData();
                     }
                 } else {
                     showToast("クリップボードからの読み取りが許可されていません。手動で貼り付けてください。");
