@@ -71,9 +71,9 @@
                         コントラクトアドレス入力
                     </h2>
 
-                    <!-- チェーン選択 -->
+                    <!-- チェーン選択 (グリッド幅を調整し、7ボタン対応) -->
                     <label class="block text-xs font-medium text-gray-400 mb-2">ネットワークを選択</label>
-                    <div class="grid grid-cols-3 gap-2 mb-4" id="chain-selector">
+                    <div class="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-3 xl:grid-cols-4 gap-2 mb-4" id="chain-selector">
                         <!-- JSで動的に構築 -->
                     </div>
 
@@ -116,7 +116,7 @@
                     </div>
                 </div>
 
-                <!-- リアルタイムセキュリティ診断結果 (追加セクション) -->
+                <!-- リアルタイムセキュリティ診断結果 -->
                 <div id="security-report-card" class="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 shadow-xl backdrop-blur-sm hidden">
                     <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-800">
                         <h2 class="text-md font-semibold text-gray-200 flex items-center gap-2">
@@ -137,7 +137,7 @@
                     <!-- エラー表示 -->
                     <div id="security-error" class="py-6 text-center text-xs text-gray-500 hidden">
                         <i data-lucide="alert-triangle" class="w-8 h-8 text-yellow-500 mx-auto mb-2"></i>
-                        <p>このチェーンの自動診断結果を取得できませんでした。<br>右側の外部診断リンクをご利用ください。</p>
+                        <p>このトークンの自動診断データが未登録か、取得できませんでした。<br>右側の外部診断リンクから直接最新レポートをご確認ください。</p>
                     </div>
 
                     <!-- 診断データ表示エリア -->
@@ -494,6 +494,19 @@
                 goPlusId: '1',
                 type: 'evm'
             },
+            bnb: {
+                name: 'BNB Chain',
+                id: 'bnb',
+                chainId: '56',
+                logo: '🟡',
+                explorerName: 'BscScan',
+                explorerUrl: 'https://bscscan.com',
+                dexScreenerId: 'bsc',
+                geckoTerminalId: 'bsc',
+                bubbleMapsId: 'bsc',
+                goPlusId: '56',
+                type: 'evm'
+            },
             solana: {
                 name: 'Solana',
                 id: 'solana',
@@ -664,7 +677,10 @@
                 emptyState.classList.add('opacity-0', 'pointer-events-none');
                 securityReportCard.classList.remove('hidden');
                 
+                // 初回登録 (最初は名前なしで履歴を作成)
                 addToHistory(cleanAddress, selectedChainId);
+                // バックグラウンドでメタデータ（名前・シンボル）を取りに行って履歴を自動アップデート
+                fetchTokenMetadata(cleanAddress, selectedChainId);
             } else {
                 validationBadge.textContent = "不正形式";
                 validationBadge.className = "text-[10px] font-semibold text-red-500 flex items-center gap-0.5";
@@ -676,6 +692,27 @@
             
             lucide.createIcons();
             return isValid;
+        }
+
+        // バックグラウンドでのトークン名・シンボルの取得処理
+        async function fetchTokenMetadata(address, chainId) {
+            try {
+                // CORSなしで最速で名札を取得できる DEX Screener API を利用
+                const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.pairs && data.pairs.length > 0) {
+                        const baseToken = data.pairs[0].baseToken;
+                        if (baseToken && baseToken.name) {
+                            // 名前が取れたので履歴を自動更新
+                            addToHistory(address, chainId, baseToken.name, baseToken.symbol);
+                            return;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Metadata fetch from DEX Screener skipped/failed, falling back to GoPlus check.");
+            }
         }
 
         // リアルタイムセキュリティ診断APIの呼び出し
@@ -703,15 +740,26 @@
             }
 
             try {
-                // GoPlus Security パブリックAPIを叩く (無料・レートリミットあり)
+                // GoPlus Security パブリックAPIを叩く
                 const response = await fetch(`https://api.gopluslabs.io/api/v1/token_security/${chain.goPlusId}?contract_addresses=${address}`);
                 if (!response.ok) throw new Error('API通信エラー');
                 
                 const data = await response.json();
                 
-                if (data.code === 1 && data.result && data.result[address.toLowerCase()]) {
-                    const info = data.result[address.toLowerCase()];
-                    displaySecurityReport(info);
+                // キー名の大文字・小文字に左右されないように、resultオブジェクトから最初の値を取り出す
+                if (data.code === 1 && data.result) {
+                    const results = Object.values(data.result);
+                    if (results.length > 0 && results[0] && Object.keys(results[0]).length > 0) {
+                        const info = results[0];
+                        displaySecurityReport(info);
+                        
+                        // もしGoPlus側からトークン名が取れていれば、履歴に反映させる
+                        if (info.token_name || info.token_symbol) {
+                            addToHistory(address, selectedChainId, info.token_name, info.token_symbol);
+                        }
+                    } else {
+                        throw new Error('判定データがありません');
+                    }
                 } else {
                     throw new Error('判定データがありません');
                 }
@@ -757,7 +805,6 @@
             }
 
             // 3. 所有権の放棄（Ownerがまだ権限を持っているか）
-            // owner_address が '0x000...0000' であれば放棄されている（安全）
             const hasOwner = info.owner_address && info.owner_address !== "0x0000000000000000000000000000000000000000" && info.owner_address !== "";
             if (hasOwner) {
                 ownerBadge.textContent = "所有権あり（改変リスク）";
@@ -768,7 +815,7 @@
                 ownerBadge.className = "font-bold text-emerald-400";
             }
 
-            // 4. ブラックリスト（任意のウォレットを凍結し、送金できなくするプログラム）
+            // 4. ブラックリスト
             const hasBlacklist = info.is_blacklisted === "1";
             if (hasBlacklist) {
                 blacklistBadge.textContent = "あり（極めて危険）";
@@ -779,7 +826,7 @@
                 blacklistBadge.className = "font-bold text-emerald-400";
             }
 
-            // 5. 手数料の表示 (買手数料 / 売手数料)
+            // 5. 手数料の表示
             const buyTax = parseFloat(info.buy_tax || "0") * 100;
             const sellTax = parseFloat(info.sell_tax || "0") * 100;
             taxBadge.textContent = `買: ${buyTax.toFixed(1)}% / 売: ${sellTax.toFixed(1)}%`;
@@ -831,6 +878,7 @@
             resultChainBadge.className = `px-2.5 py-0.5 rounded-full text-xs font-medium mr-2 border ${
                 chain.id === 'base' ? 'bg-blue-900/50 text-blue-300 border-blue-800/50' :
                 chain.id === 'ethereum' ? 'bg-indigo-900/50 text-indigo-300 border-indigo-800/50' :
+                chain.id === 'bnb' ? 'bg-yellow-900/50 text-yellow-300 border-yellow-800/50' :
                 chain.id === 'solana' ? 'bg-teal-900/50 text-teal-300 border-teal-800/50' :
                 'bg-gray-800 text-gray-300 border-gray-700'
             }`;
@@ -922,7 +970,7 @@
             });
         }
 
-        // 履歴管理
+        // 履歴管理 (引数に名前とシンボルを追加)
         function loadHistory() {
             try {
                 const stored = localStorage.getItem('token_explorer_history_v2');
@@ -935,16 +983,27 @@
             renderHistory();
         }
 
-        function addToHistory(address, chainId) {
-            const exists = searchHistory.some(item => item.address.toLowerCase() === address.toLowerCase() && item.chainId === chainId);
-            if (exists) {
-                searchHistory = searchHistory.filter(item => !(item.address.toLowerCase() === address.toLowerCase() && item.chainId === chainId));
+        function addToHistory(address, chainId, tokenName = null, tokenSymbol = null) {
+            // 重複チェック
+            const existingIndex = searchHistory.findIndex(item => item.address.toLowerCase() === address.toLowerCase() && item.chainId === chainId);
+            
+            let resolvedName = tokenName;
+            let resolvedSymbol = tokenSymbol;
+
+            // すでに履歴にあり、新規取得した名前が空の場合、過去に記録した名前を引き継ぐ
+            if (existingIndex !== -1) {
+                if (!resolvedName) resolvedName = searchHistory[existingIndex].tokenName;
+                if (!resolvedSymbol) resolvedSymbol = searchHistory[existingIndex].tokenSymbol;
+                // 一度削除して最上部に入れ直す
+                searchHistory.splice(existingIndex, 1);
             }
 
             searchHistory.unshift({
                 address,
                 chainId,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                tokenName: resolvedName,
+                tokenSymbol: resolvedSymbol
             });
 
             if (searchHistory.length > 10) {
@@ -981,6 +1040,15 @@
                 const chain = chains[item.chainId] || chains.base;
                 const shortAddr = `${item.address.slice(0, 6)}...${item.address.slice(-6)}`;
                 
+                // トークン名がある場合はそれをメイン表示、ない場合はアドレス表示
+                const displayName = item.tokenName 
+                    ? `${item.tokenName} <span class="text-[10px] text-gray-400 font-normal">(${item.tokenSymbol || '?'})</span>`
+                    : shortAddr;
+
+                const subText = item.tokenName 
+                    ? `${chain.logo} ${chain.name} • ${shortAddr}`
+                    : `${chain.logo} ${chain.name} • ネットワーク`;
+
                 const div = document.createElement('div');
                 div.className = "group flex items-center justify-between p-2.5 bg-gray-950 hover:bg-gray-800 border border-gray-800/80 hover:border-gray-700 rounded-xl cursor-pointer transition-all";
                 div.onclick = () => {
@@ -989,14 +1057,13 @@
                 };
 
                 div.innerHTML = `
-                    <div class="flex items-center space-x-2 min-w-0">
-                        <span class="text-sm shrink-0">${chain.logo}</span>
-                        <div class="truncate">
-                            <p class="text-xs font-mono text-gray-300 font-medium">${shortAddr}</p>
-                            <p class="text-[10px] text-gray-500">${chain.name} ネットワーク</p>
+                    <div class="flex items-center space-x-2 min-w-0 w-full">
+                        <div class="truncate w-full">
+                            <p class="text-xs font-bold text-gray-200 truncate pr-2">${displayName}</p>
+                            <p class="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">${subText}</p>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-1">
+                    <div class="flex items-center space-x-1 shrink-0">
                         <button class="delete-history-btn p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="削除">
                             <i data-lucide="x" class="w-3.5 h-3.5"></i>
                         </button>
